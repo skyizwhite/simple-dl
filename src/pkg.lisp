@@ -43,5 +43,23 @@
                          (d-exp)
                          (d-square)))
 
+(defun numerical-diff (f x &optional (eps 1e-4))
+  (let* ((x0 (d-variable (- (d-variable-data x)
+                            eps)))
+         (x1 (d-variable (+ (d-variable-data x)
+                            eps)))
+         (y0 (call f x0))
+         (y1 (call f x1)))
+    (/ (- (d-variable-data y1) (d-variable-data y0))
+       (* 2 eps))))
 
+(numerical-diff (d-square) (d-variable 2.0))
 
+(def-d-fun d-f
+  :forward ((x) (d-variable-data (call-> (d-variable x)
+                                         (d-square)
+                                         (d-exp)
+                                         (d-square)))))
+
+(let ((x (d-variable 0.5)))
+  (numerical-diff (d-f) x))
