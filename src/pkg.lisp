@@ -20,11 +20,28 @@
   (error "Not Implemented Error"))
 
 (defmacro def-d-fun (name &key forward)
-  `(progn
-     (defclass ,name (d-function) ())
-     (defun ,name () (make-instance ',name))
-     (defmethod forward ((f ,name) ,@(first forward))
-       ,@(rest forward))))
+  `(list
+    (defclass ,name (d-function) ())
+    (defun ,name () (make-instance ',name))
+    (defmethod forward ((f ,name) ,@(first forward))
+      ,@(rest forward))))
 
 (def-d-fun d-square
   :forward ((x) (* x x)))
+
+(def-d-fun d-exp
+  :forward ((x) (exp x)))
+
+(defmacro call-> (x &rest steps)
+  (reduce (lambda (form step)
+            `(call ,step ,form))
+          (reverse steps)
+          :initial-value x))
+
+(d-variable-data (call-> (d-variable 0.5)
+                         (d-square)
+                         (d-exp)
+                         (d-square)))
+
+
+
