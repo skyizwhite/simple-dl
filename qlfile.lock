@@ -1,0 +1,8 @@
+("quicklisp" .
+ (:class qlot/source/dist:source-dist
+  :initargs (:distribution "https://beta.quicklisp.org/dist/quicklisp.txt" :%version :latest)
+  :version "2026-01-01"))
+("simple-matrix" .
+ (:class qlot/source/git:source-git
+  :initargs (:remote-url "https://codeberg.org/glv/cl-simple-matrix.git")
+  :version "git-afe521139301a91372c9422d5f689b0a60b22cc8"))
