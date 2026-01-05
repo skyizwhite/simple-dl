@@ -6,31 +6,42 @@
 
 (defclass d-variable ()
   ((data :initarg  :data
-         :accessor d-variable-data)))
+         :accessor d-variable-data)
+   (grad :accessor d-variable-grad)))
 
 (defun d-variable (data)
   (make-instance 'd-variable :data data))
 
-(defclass d-function () ())
+(defclass d-function () 
+  ((input :accessor d-function-input)))
 
 (defmethod call ((f d-function) (input d-variable))
+  (setf (d-function-input f) input)
   (d-variable (forward f (d-variable-data input))))
 
 (defmethod forward ((f d-function) x)
   (error "Not Implemented Error"))
 
-(defmacro def-d-fun (name &key forward)
-  `(list
-    (defclass ,name (d-function) ())
-    (defun ,name () (make-instance ',name))
-    (defmethod forward ((f ,name) ,@(first forward))
-      ,@(rest forward))))
+(defmethod backward ((f d-function) gy)
+  (error "Not IMplemented Error"))
+
+(defmacro def-d-fun (name &key forward backward)
+  `(list (defclass ,name (d-function) ())
+         (defun ,name () (make-instance ',name))
+         (defmethod forward ((f ,name) ,@(first forward))
+           ,@(rest forward))
+         (defmethod backward ((f ,name) ,@(first backward))
+           ,@(rest backward))))
 
 (def-d-fun d-square
-  :forward ((x) (* x x)))
+  :forward ((x) (* x x))
+  :backward ((gy) (let ((x (d-function-input f)))
+                    (* 2 x gy))))
 
 (def-d-fun d-exp
-  :forward ((x) (exp x)))
+  :forward ((x) (exp x))
+  :backward ((gy) (let ((x (d-function-input f)))
+                    (* (exp x) gy))))
 
 (defmacro call-> (x &rest steps)
   (reduce (lambda (form step)
@@ -55,11 +66,11 @@
 
 (numerical-diff (d-square) (d-variable 2.0))
 
-(def-d-fun d-f
-  :forward ((x) (d-variable-data (call-> (d-variable x)
-                                         (d-square)
-                                         (d-exp)
-                                         (d-square)))))
+;(def-d-fun d-f
+;  :forward ((x) (d-variable-data (call-> (d-variable x)
+;                                         (d-square)
+;                                         (d-exp)
+;                                         (d-square)))))
 
-(let ((x (d-variable 0.5)))
-  (numerical-diff (d-f) x))
+;(let ((x (d-variable 0.5)))
+;  (numerical-diff (d-f) x))
