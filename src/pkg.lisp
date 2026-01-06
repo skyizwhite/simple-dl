@@ -5,42 +5,63 @@
 (in-package :simple-dl)
 
 (defclass d-variable ()
-  ((data :initarg  :data
-         :accessor d-variable-data)
-   (grad :accessor d-variable-grad)))
+  ((data    :accessor d-variable-data
+            :initarg  :data)
+   (grad    :accessor d-variable-grad
+            :initform nil)
+   (creator :accessor d-variable-creator
+            :initform nil)))
 
 (defun d-variable (data)
   (make-instance 'd-variable :data data))
 
+(defmethod set-creator ((v d-variable) f)
+  (setf (d-variable-creator v) f))
+
+(defgeneric backward (node &optional gy))
+
+(defmethod backward ((v d-variable) &optional gy)
+  (declare (ignore gy))
+  (let ((f (d-variable-creator v)))
+    (when f
+      (let ((x (d-function-input f)))
+        (setf (d-variable-grad x) (backward f (d-variable-grad v)))
+        (backward x)))))
+
 (defclass d-function () 
-  ((input :accessor d-function-input)))
+  ((input  :accessor d-function-input
+           :initform nil)
+   (output :accessor d-function-output
+           :initform nil)))
 
 (defmethod call ((f d-function) (input d-variable))
-  (setf (d-function-input f) input)
-  (d-variable (forward f (d-variable-data input))))
+  (let* ((x (d-variable-data input))
+         (y (forward f x))
+         (output (d-variable y)))
+    (set-creator output f)
+    (setf (d-function-input f) input)
+    (setf (d-function-output f) output)
+    output))
 
 (defmethod forward ((f d-function) x)
   (error "Not Implemented Error"))
-
-(defmethod backward ((f d-function) gy)
-  (error "Not IMplemented Error"))
 
 (defmacro def-d-fun (name &key forward backward)
   `(list (defclass ,name (d-function) ())
          (defun ,name () (make-instance ',name))
          (defmethod forward ((f ,name) ,@(first forward))
            ,@(rest forward))
-         (defmethod backward ((f ,name) ,@(first backward))
+         (defmethod backward ((f ,name) &optional ,@(first backward))
            ,@(rest backward))))
 
 (def-d-fun d-square
   :forward ((x) (* x x))
-  :backward ((gy) (let ((x (d-function-input f)))
+  :backward ((gy) (let ((x (d-variable-data (d-function-input f))))
                     (* 2 x gy))))
 
 (def-d-fun d-exp
   :forward ((x) (exp x))
-  :backward ((gy) (let ((x (d-function-input f)))
+  :backward ((gy) (let ((x (d-variable-data (d-function-input f))))
                     (* (exp x) gy))))
 
 (defmacro call-> (x &rest steps)
@@ -74,3 +95,4 @@
 
 ;(let ((x (d-variable 0.5)))
 ;  (numerical-diff (d-f) x))
+
