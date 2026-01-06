@@ -21,6 +21,8 @@
 
 (defmethod backward ((v g-variable) &optional gy)
   (declare (ignore gy))
+  (unless (g-variable-grad v)
+    (setf (g-variable-grad v) 1.0)) ;np.ones_like()
   (let ((funcs (list (g-variable-creator v))))
     (loop :while funcs
           :for f := (pop funcs)
@@ -36,8 +38,12 @@
    (output :accessor g-function-output
            :initform nil)))
 
-(defmethod call ((f g-function) (input g-variable))
-  (let* ((x (g-variable-data input))
+(defmethod forward ((f g-function) x)
+  (error "Not Implemented Error"))
+
+(defun %g-fun (class input)
+  (let* ((f (make-instance class))
+         (x (g-variable-data input))
          (y (forward f x))
          (output (g-variable y)))
     (set-creator output f)
@@ -45,29 +51,23 @@
     (setf (g-function-output f) output)
     output))
 
-(defmethod forward ((f g-function) x)
-  (error "Not Implemented Error"))
-
 (defmacro def-g-fun (name &key forward backward)
   `(list (defclass ,name (g-function) ())
-         (defun ,name () (make-instance ',name))
+         (defun ,name (input) (%g-fun ',name input))
          (defmethod forward ((f ,name) ,@(first forward))
            ,@(rest forward))
          (defmethod backward ((f ,name) &optional ,@(first backward))
            ,@(rest backward))))
 
+(defmethod input-data ((f g-function))
+  (g-variable-data (g-function-input f)))
+
 (def-g-fun g-square
-  :forward ((x) (* x x))
-  :backward ((gy) (let ((x (g-variable-data (g-function-input f))))
+  :forward ((x) (expt x 2))
+  :backward ((gy) (let ((x (input-data f)))
                     (* 2 x gy))))
 
 (def-g-fun g-exp
   :forward ((x) (exp x))
-  :backward ((gy) (let ((x (g-variable-data (g-function-input f))))
+  :backward ((gy) (let ((x (input-data f)))
                     (* (exp x) gy))))
-
-(defmacro call-> (x &rest steps)
-  (reduce (lambda (form step)
-            `(call ,step ,form))
-          (reverse steps)
-          :initial-value x))
