@@ -2,7 +2,7 @@
  (:class qlot/source/dist:source-dist
   :initargs (:distribution "https://beta.quicklisp.org/dist/quicklisp.txt" :%version :latest)
   :version "2026-01-01"))
-("simple-matrix" .
- (:class qlot/source/git:source-git
-  :initargs (:remote-url "https://codeberg.org/glv/cl-simple-matrix.git")
-  :version "git-afe521139301a91372c9422d5f689b0a60b22cc8"))
+("numcl" .
+ (:class qlot/source/github:source-github
+  :initargs (:repos "numcl/numcl" :ref nil :branch nil :tag nil)
+  :version "github-6d550f7aec3d374fa2672e65d7bdf0c8b789dc03"))
