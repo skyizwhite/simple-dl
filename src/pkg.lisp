@@ -47,8 +47,8 @@
          (y (forward f x))
          (output (g-variable y)))
     (set-creator output f)
-    (setf (g-function-input f) input)
-    (setf (g-function-output f) output)
+    (setf (g-function-input f) input
+          (g-function-output f) output)
     output))
 
 (defmacro def-g-fun (name &key forward backward)
