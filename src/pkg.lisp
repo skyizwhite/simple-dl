@@ -1,6 +1,12 @@
-(defpackage :gauna
+(uiop:define-package :gauna
   (:use #:numcl)
-  (:nicknames #:gauna/pkg))
+  (:nicknames #:gauna/pkg)
+  (:export #:g-variable
+           #:g-variable-data
+           #:g-variable-grad
+           #:backward
+           #:g-square
+           #:d-exp))
 (in-package :gauna)
 
 (defclass g-variable ()
