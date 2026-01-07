@@ -3,4 +3,6 @@
   :author "Akira Tempaku <paku@skyizwhite.dev>"
   :class :package-inferred-system
   :pathname "src"
-  :depends-on ("gauna/pkg"))
+  :depends-on ("gauna/pkg")
+  :in-order-to ((test-op (test-op gauna-test))))
+

@@ -6,3 +6,7 @@
  (:class qlot/source/github:source-github
   :initargs (:repos "numcl/numcl" :ref nil :branch nil :tag nil)
   :version "github-6d550f7aec3d374fa2672e65d7bdf0c8b789dc03"))
+("rove" .
+ (:class qlot/source/ql:source-ql
+  :initargs (:%version :latest)
+  :version "ql-2026-01-01"))
