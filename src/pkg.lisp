@@ -12,6 +12,10 @@
             :initform nil)))
 
 (defun g-variable (data)
+  (unless (or (null data)
+              (and (numcl-array-p data)
+                   (shape data)))
+    (error "~a is not supported" (type-of data)))
   (make-instance 'g-variable :data data))
 
 (defmethod set-creator ((v g-variable) f)
@@ -22,7 +26,7 @@
 (defmethod backward ((v g-variable) &optional gy)
   (declare (ignore gy))
   (unless (g-variable-grad v)
-    (setf (g-variable-grad v) 1.0)) ;np.ones_like()
+    (setf (g-variable-grad v) (ones-like (g-variable-data v))))
   (let ((funcs (list (g-variable-creator v))))
     (loop :while funcs
           :for f := (pop funcs)
@@ -45,7 +49,7 @@
   (let* ((f (make-instance class))
          (x (g-variable-data input))
          (y (forward f x))
-         (output (g-variable y)))
+         (output (g-variable (asarray y))))
     (set-creator output f)
     (setf (g-function-input f) input
           (g-function-output f) output)
