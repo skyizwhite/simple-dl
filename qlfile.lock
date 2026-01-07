@@ -6,6 +6,10 @@
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/numcl/numcl.git")
   :version "github-6d550f7aec3d374fa2672e65d7bdf0c8b789dc03"))
+("alexandria" .
+ (:class qlot/source/ql:source-ql
+  :initargs (:%version :latest)
+  :version "ql-2024-10-12"))
 ("rove" .
  (:class qlot/source/ql:source-ql
   :initargs (:%version :latest)
