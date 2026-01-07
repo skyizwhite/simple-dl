@@ -9,11 +9,11 @@
 
 (deftest square-test
   (testing "forward"
-    (let* ((x (g-variable (asarray '(2.0))))
+    (let* ((x (make-g-variable (asarray '(2.0))))
            (y (g-square x)))
       (ok (= (asarray '(4.0)) (g-variable-data y)))))
   (testing "backward"
-    (let* ((x (g-variable (asarray '(3.0))))
+    (let* ((x (make-g-variable (asarray '(3.0))))
            (y (g-square x)))
       (backward y)
       (ok (= (asarray '(6.0)) (g-variable-grad x))))))

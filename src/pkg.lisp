@@ -1,7 +1,10 @@
 (uiop:define-package :gauna
-  (:use #:numcl)
   (:nicknames #:gauna/pkg)
+  (:use #:numcl)
+  (:import-from #:alexandria
+                #:symbolicate)
   (:export #:g-variable
+           #:make-g-variable
            #:g-variable-data
            #:g-variable-grad
            #:backward
@@ -17,7 +20,7 @@
    (creator :accessor g-variable-creator
             :initform nil)))
 
-(defun g-variable (data)
+(defun make-g-variable (data)
   (unless (or (null data)
               (and (numcl-array-p data)
                    (shape data)))
@@ -27,9 +30,7 @@
 (defmethod set-creator ((v g-variable) f)
   (setf (g-variable-creator v) f))
 
-(defgeneric backward (node &optional gy))
-
-(defmethod backward ((v g-variable) &optional gy)
+(defmethod backward ((v g-variable) &rest gy)
   (declare (ignore gy))
   (unless (g-variable-grad v)
     (setf (g-variable-grad v) (ones-like (g-variable-data v))))
@@ -48,26 +49,30 @@
    (output :accessor g-function-output
            :initform nil)))
 
-(defmethod forward ((f g-function) x)
-  (error "Not Implemented Error"))
-
-(defun %g-fun (class input)
-  (let* ((f (make-instance class))
-         (x (g-variable-data input))
+(defmethod call ((f g-function) input)
+  (let* ((x (g-variable-data input))
          (y (forward f x))
-         (output (g-variable (asarray y))))
+         (output (make-g-variable (asarray y))))
     (set-creator output f)
     (setf (g-function-input f) input
           (g-function-output f) output)
     output))
 
 (defmacro def-g-fun (name &key forward backward)
-  `(list (defclass ,name (g-function) ())
-         (defun ,name (input) (%g-fun ',name input))
-         (defmethod forward ((f ,name) ,@(first forward))
-           ,@(rest forward))
-         (defmethod backward ((f ,name) &optional ,@(first backward))
-           ,@(rest backward))))
+  `(eval-when (:compile-toplevel :load-toplevel :execute)
+     (list (defclass ,name (g-function) ())
+           (defun ,(symbolicate 'make- name) ()
+             (make-instance ',name))
+           (defun ,name (input)
+             (call (make-instance ',name) input))
+           ,(and forward
+                 `(defmethod forward ((f ,name) &rest args)
+                    (destructuring-bind ,(first forward) args
+                      ,@(rest forward))))
+           ,(and backward
+                 `(defmethod backward ((f ,name) &rest args)
+                    (destructuring-bind ,(first backward) args
+                      ,@(rest backward)))))))
 
 (defmethod input-data ((f g-function))
   (g-variable-data (g-function-input f)))
