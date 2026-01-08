@@ -27,6 +27,9 @@
     (error "~a is not supported" (type-of data)))
   (make-instance 'g-variable :data data))
 
+(defun g-asarray (arr)
+  (make-g-variable (asarray arr)))
+
 (defmethod set-creator ((v g-variable) f)
   (setf (g-variable-creator v) f))
 
@@ -78,19 +81,19 @@
            ,(and backward
                  `(defmethod backward ((f ,name) &rest args)
                     (destructuring-bind ,(first backward) args
-                      ,@(rest backward)))))))
+                      (let ((inputs (mapcar #'g-variable-data (g-function-inputs f))))
+                        ,@(rest backward))))))))
 
 (def-g-fun g-square
   :forward ((x) (expt x 2))
-  :backward ((gy) (let ((x (g-variable-data (first (g-function-inputs f)))))
+  :backward ((gy) (let ((x (first inputs)))
                     (* 2 x gy))))
 
 (def-g-fun g-exp
   :forward ((x) (exp x))
-  :backward ((gy) (let ((x (g-variable-data (first (g-function-inputs f)))))
+  :backward ((gy) (let ((x (first inputs)))
                     (* (exp x) gy))))
 
 (def-g-fun g-add
   :forward ((x0 x1) (+ x0 x1))
   :backward ((gy) (list gy gy)))
- 
