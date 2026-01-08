@@ -33,6 +33,9 @@
 (defmethod set-creator ((v g-variable) f)
   (setf (g-variable-creator v) f))
 
+(defmethod clear-grad ((v g-variable))
+  (setf (g-variable-grad v) nil))
+
 (defmethod backward ((v g-variable) &rest gy)
   (declare (ignore gy))
   (unless (g-variable-grad v)
@@ -45,7 +48,9 @@
           :do (unless (listp gxs) (setf gxs (list gxs)))
               (loop :for x :in (g-function-inputs f)
                     :for gx :in gxs
-                    :do (setf (g-variable-grad x) gx)
+                    :do (if (null (g-variable-grad x))
+                            (setf (g-variable-grad x) gx)
+                            (setf (g-variable-grad x) (+ (g-variable-grad x) gx)))
                         (when (g-variable-creator x)
                           (push (g-variable-creator x) funcs))))))
 
@@ -81,17 +86,18 @@
            ,(and backward
                  `(defmethod backward ((f ,name) &rest args)
                     (destructuring-bind ,(first backward) args
-                      (let ((inputs (mapcar #'g-variable-data (g-function-inputs f))))
+                      (let ((xs (mapcar #'g-variable-data (g-function-inputs f))))
+                        (declare (ignorable xs))
                         ,@(rest backward))))))))
 
 (def-g-fun g-square
   :forward ((x) (expt x 2))
-  :backward ((gy) (let ((x (first inputs)))
+  :backward ((gy) (let ((x (first xs)))
                     (* 2 x gy))))
 
 (def-g-fun g-exp
   :forward ((x) (exp x))
-  :backward ((gy) (let ((x (first inputs)))
+  :backward ((gy) (let ((x (first xs)))
                     (* (exp x) gy))))
 
 (def-g-fun g-add
