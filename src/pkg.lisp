@@ -13,12 +13,14 @@
 (in-package :gauna)
 
 (defclass g-variable ()
-  ((data    :accessor g-variable-data
-            :initarg  :data)
-   (grad    :accessor g-variable-grad
-            :initform nil)
-   (creator :accessor g-variable-creator
-            :initform nil)))
+  ((data       :accessor g-variable-data
+               :initarg  :data)
+   (grad       :accessor g-variable-grad
+               :initform nil)
+   (creator    :accessor g-variable-creator
+               :initform nil)
+   (generation :accessor g-variable-generation
+               :initform 0)))
 
 (defun make-g-variable (data)
   (unless (or (null data)
@@ -31,7 +33,8 @@
   (make-g-variable (asarray arr)))
 
 (defmethod set-creator ((v g-variable) f)
-  (setf (g-variable-creator v) f))
+  (setf (g-variable-creator v) f)
+  (setf (g-variable-generation v) (+ 1 (g-function-generation f))))
 
 (defmethod clear-grad ((v g-variable))
   (setf (g-variable-grad v) nil))
@@ -40,32 +43,41 @@
   (declare (ignore gy))
   (unless (g-variable-grad v)
     (setf (g-variable-grad v) (ones-like (g-variable-data v))))
-  (let ((funcs (list (g-variable-creator v))))
-    (loop :while funcs
-          :for f := (pop funcs)
-          :for gys := (mapcar #'g-variable-grad (g-function-outputs f))
-          :for gxs := (apply #'backward `(,f ,@gys))
-          :do (unless (listp gxs) (setf gxs (list gxs)))
-              (loop :for x :in (g-function-inputs f)
-                    :for gx :in gxs
-                    :do (if (null (g-variable-grad x))
-                            (setf (g-variable-grad x) gx)
-                            (setf (g-variable-grad x) (+ (g-variable-grad x) gx)))
-                        (when (g-variable-creator x)
-                          (push (g-variable-creator x) funcs))))))
+  (let ((funcs (list))
+        (seen-set (list)))
+    (labels ((add-func (f)
+               (unless (member f seen-set)
+                 (push f funcs)
+                 (push f seen-set)
+                 (stable-sort funcs #'> :key #'g-function-generation))))
+      (add-func (g-variable-creator v))
+      (loop :while funcs
+            :for f := (pop funcs)
+            :for gys := (mapcar #'g-variable-grad (g-function-outputs f))
+            :for gxs := (apply #'backward `(,f ,@gys))
+            :do (unless (listp gxs) (setf gxs (list gxs)))
+                (loop :for x :in (g-function-inputs f)
+                      :for gx :in gxs
+                      :do (if (null (g-variable-grad x))
+                              (setf (g-variable-grad x) gx)
+                              (setf (g-variable-grad x) (+ (g-variable-grad x) gx)))
+                          (when (g-variable-creator x)
+                            (add-func (g-variable-creator x))))))))
 
 (defclass g-function () 
   ((inputs  :accessor g-function-inputs
             :initform nil)
    (outputs :accessor g-function-outputs
-            :initform nil)))
+            :initform nil)
+   (generation :accessor g-function-generation)))
 
 (defmethod call ((f g-function) &rest inputs)
   (let* ((xs (mapcar #'g-variable-data inputs))
          (ys (let ((tmp (apply #'forward `(,f ,@xs))))
                (if (listp tmp) tmp (list tmp))))
          (outputs (mapcar (lambda (y) (make-g-variable (asarray y))) ys)))
-    (mapcan (lambda (output) (set-creator output f)) outputs)
+    (setf (g-function-generation f) (apply #'max (mapcar #'g-variable-generation inputs)))
+    (mapc (lambda (output) (set-creator output f)) outputs)
     (setf (g-function-inputs f) inputs
           (g-function-outputs f) outputs)
     (if (null (rest outputs))
