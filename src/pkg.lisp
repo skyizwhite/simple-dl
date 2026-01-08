@@ -37,11 +37,14 @@
   (let ((funcs (list (g-variable-creator v))))
     (loop :while funcs
           :for f := (pop funcs)
-          :for x := (g-function-inputs f)
-          :for y := (g-function-outputs f)
-          :do (setf (g-variable-grad x) (backward f (g-variable-grad y)))
-              (when (g-variable-creator x)
-                (push (g-variable-creator x) funcs)))))
+          :for gys := (mapcar #'g-variable-grad (g-function-outputs f))
+          :for gxs := (apply #'backward `(,f ,@gys))
+          :do (unless (listp gxs) (setf gxs (list gxs)))
+              (loop :for x :in (g-function-inputs f)
+                    :for gx :in gxs
+                    :do (setf (g-variable-grad x) gx)
+                        (when (g-variable-creator x)
+                          (push (g-variable-creator x) funcs))))))
 
 (defclass g-function () 
   ((inputs  :accessor g-function-inputs
@@ -55,8 +58,8 @@
                (if (listp tmp) tmp (list tmp))))
          (outputs (mapcar (lambda (y) (make-g-variable (asarray y))) ys)))
     (mapcan (lambda (output) (set-creator output f)) outputs)
-    (setf (g-function-inputs f) inputs)
-    (setf (g-function-outputs f) outputs)
+    (setf (g-function-inputs f) inputs
+          (g-function-outputs f) outputs)
     (if (null (rest outputs))
         (first outputs)
         outputs)))
@@ -77,19 +80,17 @@
                     (destructuring-bind ,(first backward) args
                       ,@(rest backward)))))))
 
-(defmethod inputs-data ((f g-function))
-  (g-variable-data (g-function-inputs f)))
-
 (def-g-fun g-square
   :forward ((x) (expt x 2))
-  :backward ((gy) (let ((x (inputs-data f)))
+  :backward ((gy) (let ((x (g-variable-data (first (g-function-inputs f)))))
                     (* 2 x gy))))
 
 (def-g-fun g-exp
   :forward ((x) (exp x))
-  :backward ((gy) (let ((x (inputs-data f)))
+  :backward ((gy) (let ((x (g-variable-data (first (g-function-inputs f)))))
                     (* (exp x) gy))))
 
 (def-g-fun g-add
-  :forward ((x0 x1) (+ x0 x1)))
+  :forward ((x0 x1) (+ x0 x1))
+  :backward ((gy) (list gy gy)))
  
