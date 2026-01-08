@@ -11,10 +11,9 @@
   (testing "forward"
     (let* ((x (make-g-variable (asarray '(2.0))))
            (y (g-square x)))
-      (ok (= (asarray '(4.0)) (g-variable-data y)))))
+      (ok (= (asarray '(4.0)) (@data y)))))
   (testing "backward"
     (let* ((x (make-g-variable (asarray '(3.0))))
            (y (g-square x)))
       (backward y)
-      (ok (= (asarray '(6.0)) (g-variable-grad x))))))
-  
+      (ok (= (asarray '(6.0)) (@grad x))))))
