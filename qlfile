@@ -1,3 +1,4 @@
 git numcl https://github.com/numcl/numcl.git
 ql alexandria
 ql rove
+ql trivial-garbage
