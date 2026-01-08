@@ -37,34 +37,37 @@
   (let ((funcs (list (g-variable-creator v))))
     (loop :while funcs
           :for f := (pop funcs)
-          :for x := (g-function-input f)
-          :for y := (g-function-output f)
+          :for x := (g-function-inputs f)
+          :for y := (g-function-outputs f)
           :do (setf (g-variable-grad x) (backward f (g-variable-grad y)))
               (when (g-variable-creator x)
                 (push (g-variable-creator x) funcs)))))
 
 (defclass g-function () 
-  ((input  :accessor g-function-input
-           :initform nil)
-   (output :accessor g-function-output
-           :initform nil)))
+  ((inputs  :accessor g-function-inputs
+            :initform nil)
+   (outputs :accessor g-function-outputs
+            :initform nil)))
 
-(defmethod call ((f g-function) input)
-  (let* ((x (g-variable-data input))
-         (y (forward f x))
-         (output (make-g-variable (asarray y))))
-    (set-creator output f)
-    (setf (g-function-input f) input
-          (g-function-output f) output)
-    output))
+(defmethod call ((f g-function) &rest inputs)
+  (let* ((xs (mapcar #'g-variable-data inputs))
+         (ys (let ((tmp (apply #'forward `(,f ,@xs))))
+               (if (listp tmp) tmp (list tmp))))
+         (outputs (mapcar (lambda (y) (make-g-variable (asarray y))) ys)))
+    (mapcan (lambda (output) (set-creator output f)) outputs)
+    (setf (g-function-inputs f) inputs)
+    (setf (g-function-outputs f) outputs)
+    (if (null (rest outputs))
+        (first outputs)
+        outputs)))
 
 (defmacro def-g-fun (name &key forward backward)
   `(eval-when (:compile-toplevel :load-toplevel :execute)
      (list (defclass ,name (g-function) ())
            (defun ,(symbolicate 'make- name) ()
              (make-instance ',name))
-           (defun ,name (input)
-             (call (make-instance ',name) input))
+           (defun ,name (&rest inputs)
+             (apply #'call `(,(make-instance ',name) ,@inputs)))
            ,(and forward
                  `(defmethod forward ((f ,name) &rest args)
                     (destructuring-bind ,(first forward) args
@@ -74,15 +77,19 @@
                     (destructuring-bind ,(first backward) args
                       ,@(rest backward)))))))
 
-(defmethod input-data ((f g-function))
-  (g-variable-data (g-function-input f)))
+(defmethod inputs-data ((f g-function))
+  (g-variable-data (g-function-inputs f)))
 
 (def-g-fun g-square
   :forward ((x) (expt x 2))
-  :backward ((gy) (let ((x (input-data f)))
+  :backward ((gy) (let ((x (inputs-data f)))
                     (* 2 x gy))))
 
 (def-g-fun g-exp
   :forward ((x) (exp x))
-  :backward ((gy) (let ((x (input-data f)))
+  :backward ((gy) (let ((x (inputs-data f)))
                     (* (exp x) gy))))
+
+(def-g-fun g-add
+  :forward ((x0 x1) (+ x0 x1)))
+ 
