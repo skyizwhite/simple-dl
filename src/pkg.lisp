@@ -25,10 +25,12 @@
    (generation :accessor @generation
                :initform 0)))
 
+(defun supported-data-p (data)
+  (or (null data)
+      (and (numcl-array-p data) (shape data))))
+
 (defun make-g-variable (data)
-  (unless (or (null data)
-              (and (numcl-array-p data)
-                   (shape data)))
+  (unless (supported-data-p data)
     (error "~a is not supported" (type-of data)))
   (make-instance 'g-variable :data data))
 
@@ -36,11 +38,17 @@
   (make-g-variable (asarray arr)))
 
 (defmethod set-creator ((v g-variable) f)
-  (setf (@creator v) f)
-  (setf (@generation v) (+ 1 (@generation f))))
+  (setf (@creator v) f
+        (@generation v) (+ 1 (@generation f))))
 
 (defmethod clear-grad ((v g-variable))
   (setf (@grad v) nil))
+
+(defun ensure-list (l)
+  (if (listp l) l (list l)))
+
+(defun maybe-unlist (a)
+  (if (null (rest a)) (first a) a))
 
 (defmethod backward ((v g-variable) &rest gy)
   (declare (ignore gy))
@@ -59,9 +67,8 @@
             :for gys := (mapcar #'(lambda (output)
                                     (@grad (weak-pointer-value output)))
                                 (@outputs f))
-            :for gxs := (apply #'backward `(,f ,@gys))
-            :do (unless (listp gxs) (setf gxs (list gxs)))
-                (loop :for x :in (@inputs f)
+            :for gxs := (ensure-list (apply #'backward f gys))
+            :do (loop :for x :in (@inputs f)
                       :for gx :in gxs
                       :do (if (null (@grad x))
                               (setf (@grad x) gx)
@@ -78,34 +85,31 @@
 
 (defmethod call ((f g-function) &rest inputs)
   (let* ((xs (mapcar #'@data inputs))
-         (ys (let ((tmp (apply #'forward `(,f ,@xs))))
-               (if (listp tmp) tmp (list tmp))))
+         (ys (ensure-list (apply #'forward f xs)))
          (outputs (mapcar (lambda (y) (make-g-variable (asarray y))) ys)))
     (setf (@generation f) (apply #'max (mapcar #'@generation inputs)))
     (mapc (lambda (output) (set-creator output f)) outputs)
     (setf (@inputs f) inputs
           (@outputs f) (mapcar #'make-weak-pointer outputs))
-    (if (null (rest outputs))
-        (first outputs)
-        outputs)))
+    (maybe-unlist outputs)))
 
 (defmacro def-g-fun (name &key forward backward)
   `(eval-when (:compile-toplevel :load-toplevel :execute)
-     (list (defclass ,name (g-function) ())
-           (defun ,(symbolicate 'make- name) ()
-             (make-instance ',name))
-           (defun ,name (&rest inputs)
-             (apply #'call `(,(make-instance ',name) ,@inputs)))
-           ,(and forward
-                 `(defmethod forward ((f ,name) &rest args)
-                    (destructuring-bind ,(first forward) args
-                      ,@(rest forward))))
-           ,(and backward
-                 `(defmethod backward ((f ,name) &rest args)
-                    (destructuring-bind ,(first backward) args
-                      (let ((xs (mapcar #'@data (@inputs f))))
-                        (declare (ignorable xs))
-                        ,@(rest backward))))))))
+     (defclass ,name (g-function) ())
+     (defun ,(symbolicate 'make- name) ()
+       (make-instance ',name))
+     (defun ,name (&rest inputs)
+       (apply #'call (make-instance ',name) inputs))
+     ,(and forward
+           `(defmethod forward ((f ,name) &rest args)
+              (destructuring-bind ,(first forward) args
+                ,@(rest forward))))
+     ,(and backward
+           `(defmethod backward ((f ,name) &rest args)
+              (destructuring-bind ,(first backward) args
+                (let ((xs (mapcar #'@data (@inputs f))))
+                  (declare (ignorable xs))
+                  ,@(rest backward)))))))
 
 (def-g-fun g-square
   :forward ((x) (expt x 2))
