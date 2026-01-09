@@ -3,6 +3,9 @@
   (:use #:numcl)
   (:import-from #:alexandria
                 #:symbolicate)
+  (:import-from #:trivial-garbage
+                #:make-weak-pointer
+                #:weak-pointer-value)
   (:export #:g-variable
            #:make-g-variable
            #:@data
@@ -53,7 +56,9 @@
       (add-func (@creator v))
       (loop :while funcs
             :for f := (pop funcs)
-            :for gys := (mapcar #'@grad (@outputs f))
+            :for gys := (mapcar #'(lambda (output)
+                                    (@grad (weak-pointer-value output)))
+                                (@outputs f))
             :for gxs := (apply #'backward `(,f ,@gys))
             :do (unless (listp gxs) (setf gxs (list gxs)))
                 (loop :for x :in (@inputs f)
@@ -65,10 +70,10 @@
                             (add-func (@creator x))))))))
 
 (defclass g-function () 
-  ((inputs  :accessor @inputs
-            :initform nil)
-   (outputs :accessor @outputs
-            :initform nil)
+  ((inputs     :accessor @inputs
+               :initform nil)
+   (outputs    :accessor @outputs
+               :initform nil)
    (generation :accessor @generation)))
 
 (defmethod call ((f g-function) &rest inputs)
@@ -79,7 +84,7 @@
     (setf (@generation f) (apply #'max (mapcar #'@generation inputs)))
     (mapc (lambda (output) (set-creator output f)) outputs)
     (setf (@inputs f) inputs
-          (@outputs f) outputs)
+          (@outputs f) (mapcar #'make-weak-pointer outputs))
     (if (null (rest outputs))
         (first outputs)
         outputs)))
