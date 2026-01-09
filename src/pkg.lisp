@@ -15,6 +15,13 @@
            #:d-exp))
 (in-package :gauna)
 
+;;;; Config
+(defparameter *enable-backprop* t)
+
+(defmacro with-no-grad (&body body)
+  `(let ((*enable-backprop* nil))
+     ,@body))
+
 (defclass g-variable ()
   ((data       :accessor @data
                :initarg  :data)
@@ -50,8 +57,7 @@
 (defun maybe-unlist (a)
   (if (null (rest a)) (first a) a))
 
-(defmethod backward ((v g-variable) &rest gy)
-  (declare (ignore gy))
+(defmethod backward ((v g-variable) &key (retain-grad nil))
   (unless (@grad v)
     (setf (@grad v) (ones-like (@data v))))
   (let ((funcs (list))
@@ -74,7 +80,10 @@
                               (setf (@grad x) gx)
                               (setf (@grad x) (+ (@grad x) gx)))
                           (when (@creator x)
-                            (add-func (@creator x))))))))
+                            (add-func (@creator x))))
+                (unless retain-grad
+                  (loop :for y in (@outputs f)
+                        :do (setf (@grad (weak-pointer-value y)) nil)))))))
 
 (defclass g-function () 
   ((inputs     :accessor @inputs
@@ -87,10 +96,11 @@
   (let* ((xs (mapcar #'@data inputs))
          (ys (ensure-list (apply #'forward f xs)))
          (outputs (mapcar (lambda (y) (make-g-variable (asarray y))) ys)))
-    (setf (@generation f) (apply #'max (mapcar #'@generation inputs)))
-    (mapc (lambda (output) (set-creator output f)) outputs)
-    (setf (@inputs f) inputs
-          (@outputs f) (mapcar #'make-weak-pointer outputs))
+    (when *enable-backprop*
+      (setf (@generation f) (apply #'max (mapcar #'@generation inputs)))
+      (mapc (lambda (output) (set-creator output f)) outputs)
+      (setf (@inputs f) inputs
+            (@outputs f) (mapcar #'make-weak-pointer outputs)))
     (maybe-unlist outputs)))
 
 (defmacro def-g-fun (name &key forward backward)
