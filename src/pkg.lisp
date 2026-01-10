@@ -25,6 +25,9 @@
 (defclass g-variable ()
   ((data       :accessor @data
                :initarg  :data)
+   (name       :accessor @name
+               :initarg  :name
+               :initform nil)
    (grad       :accessor @grad
                :initform nil)
    (creator    :accessor @creator
@@ -32,14 +35,28 @@
    (generation :accessor @generation
                :initform 0)))
 
+(defmacro delegate (class accessor fns)
+  `(progn
+     ,@(loop :for fn :in fns
+             :collect
+                `(defmethod ,(symbolicate "@" fn) ((obj ,class))
+                   (,fn (,accessor obj))))))
+
+(defmethod print-object ((v g-variable) stream)
+  (format stream "variable(~a)~%" (@data v)))
+
+(delegate g-variable @data
+          (shape size dtype length))
+; ndim length
+
 (defun supported-data-p (data)
   (or (null data)
       (and (numcl-array-p data) (shape data))))
 
-(defun make-g-variable (data)
+(defun make-g-variable (data &optional name)
   (unless (supported-data-p data)
     (error "~a is not supported" (type-of data)))
-  (make-instance 'g-variable :data data))
+  (make-instance 'g-variable :data data :name name))
 
 (defun g-asarray (arr)
   (make-g-variable (asarray arr)))
