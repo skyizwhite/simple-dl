@@ -11,20 +11,20 @@
 (defun sphere (x y)
   (g-+ (g-square x) (g-square y)))
 
-(defparameter z (sphere x y))
-(backward z)
-(@grad x) ; 2.0
-(@grad y) ; 2.0
+(defparameter z0 (sphere x y))
+;(backward z)
+;(@grad x) ; 2.0
+;(@grad y) ; 2.0
 
 
 (defun matyas (x y)
   (g-- (g-* 0.26 (g-+ (g-square x) (g-square y)))
        (g-* 0.48 (g-* x y))))
 
-(defparameter z (matyas x y))
-(backward z)
-(@grad x) ; 0.03999900
-(@grad y) ; 0.03999900
+(defparameter z1 (matyas x y))
+;(backward z1)
+;(@grad x) ; 0.03999999
+;(@grad y) ; 0.03999999
 
 (defun goldstein-price (x y)
   (let* ((x2 (g-square x))
@@ -55,7 +55,7 @@
          (term2 (g-+ 30 (g-* c2 d))))
     (g-* term1 term2)))
 
-(defparameter z (goldstein-price x y))
-(backward z)
-(@grad x) ; -5376.0
-(@grad y) ; 8064.0
+(defparameter z2 (goldstein-price x y))
+;(backward z2)
+;(@grad x) ; -5376.0
+;(@grad y) ; 8064.0
