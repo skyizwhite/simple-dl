@@ -148,6 +148,11 @@
   :backward ((gy) (let ((x (first xs)))
                     (* (exp x) gy))))
 
-(def-g-fun g-add
+(def-g-fun g+
   :forward ((x0 x1) (+ x0 x1))
   :backward ((gy) (list gy gy)))
+
+(def-g-fun g*
+  :forward ((x0 x1) (* x0 x1))
+  :backward ((gy) (destructuring-bind (x0 x1) xs
+                    (list (* gy x1) (* gy x0)))))
