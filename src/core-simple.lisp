@@ -108,7 +108,7 @@
             :for gys := (mapcar #'(lambda (output)
                                     (@grad (weak-pointer-value output)))
                                 (@outputs f))
-            :for gxs := (ensure-list (apply #'backward f gys))
+            :for gxs := (ensure-list (apply #'f-backward f gys))
             :do (loop :for x :in (@inputs f)
                       :for gx :in gxs
                       :do (if (null (@grad x))
@@ -151,7 +151,7 @@
               (destructuring-bind ,(first forward) args
                 ,@(rest forward))))
      ,(and backward
-           `(defmethod backward ((f ,name) &rest args)
+           `(defmethod f-backward ((f ,name) &rest args)
               (destructuring-bind ,(first backward) args
                 (let ((xs (mapcar #'@data (@inputs f))))
                   (declare (ignorable xs))
