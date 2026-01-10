@@ -59,9 +59,12 @@
   (make-instance 'g-variable :data data :name name))
 
 (defun as-variable (obj)
-  (if (typep obj 'g-variable)
-      obj
-      (make-g-variable obj)))
+  (cond ((typep obj 'g-variable)
+         obj)
+        ((numberp obj)
+         (make-g-variable (asarray (ensure-list obj))))
+        (t
+         (make-g-variable obj))))
 
 (defmethod set-creator ((v g-variable) f)
   (setf (@creator v) f
@@ -141,21 +144,41 @@
                   (declare (ignorable xs))
                   ,@(rest backward)))))))
 
-(def-g-fun g-square
-  :forward ((x) (expt x 2))
-  :backward ((gy) (let ((x (first xs)))
-                    (* 2 x gy))))
+(def-g-fun g-+
+  :forward ((x0 x1) (+ x0 x1))
+  :backward ((gy) (list gy gy)))
+
+(def-g-fun g-*
+  :forward ((x0 x1) (* x0 x1))
+  :backward ((gy) (destructuring-bind (x0 x1) xs
+                    (list (* gy x1) (* gy x0)))))
+
+(def-g-fun g-
+  :forward ((x) (- x))
+  :backward ((gy) (- gy)))
+
+(def-g-fun g--
+  :forward ((x0 x1) (- x0 x1))
+  :backward ((gy) (list gy (- gy))))
+
+(def-g-fun g-/
+  :forward ((x0 x1) (/ x0 x1))
+  :backward ((gy) (destructuring-bind (x0 x1) xs
+                    (let ((gx0 (/ gy x1))
+                          (gx1 (* gy (/ (- x0) (expt x1 2)))))
+                      (list gx0 gx1)))))
+
+(def-g-fun g-expt
+  :forward ((x c) (expt x c))
+  :backward  ((gy) (destructuring-bind (x c) xs
+                     (* c (expt x (- c 1)) gy))))
 
 (def-g-fun g-exp
   :forward ((x) (exp x))
   :backward ((gy) (let ((x (first xs)))
                     (* (exp x) gy))))
 
-(def-g-fun g+
-  :forward ((x0 x1) (+ x0 x1))
-  :backward ((gy) (list gy gy)))
-
-(def-g-fun g*
-  :forward ((x0 x1) (* x0 x1))
-  :backward ((gy) (destructuring-bind (x0 x1) xs
-                    (list (* gy x1) (* gy x0)))))
+(def-g-fun g-square
+  :forward ((x) (expt x 2))
+  :backward ((gy) (let ((x (first xs)))
+                    (* 2 x gy))))
