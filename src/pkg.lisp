@@ -58,8 +58,10 @@
     (error "~a is not supported" (type-of data)))
   (make-instance 'g-variable :data data :name name))
 
-(defun g-asarray (arr)
-  (make-g-variable (asarray arr)))
+(defun as-variable (obj)
+  (if (typep obj 'g-variable)
+      obj
+      (make-g-variable obj)))
 
 (defmethod set-creator ((v g-variable) f)
   (setf (@creator v) f
@@ -110,7 +112,8 @@
    (generation :accessor @generation)))
 
 (defmethod call ((f g-function) &rest inputs)
-  (let* ((xs (mapcar #'@data inputs))
+  (let* ((inputs (mapcar #'as-variable inputs))
+         (xs (mapcar #'@data inputs))
          (ys (ensure-list (apply #'forward f xs)))
          (outputs (mapcar (lambda (y) (make-g-variable (asarray y))) ys)))
     (when *enable-backprop*
