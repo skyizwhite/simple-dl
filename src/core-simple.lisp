@@ -1,19 +1,32 @@
-(uiop:define-package :gauna
-  (:nicknames #:gauna/pkg)
+(uiop:define-package #:gauna/core-simple
   (:use #:numcl)
   (:import-from #:alexandria
                 #:symbolicate)
   (:import-from #:trivial-garbage
                 #:make-weak-pointer
                 #:weak-pointer-value)
-  (:export #:g-variable
-           #:make-g-variable
+  (:export #:with-no-grad
+           #:g-variable
            #:@data
            #:@grad
+           #:@shape
+           #:@size
+           #:@dtype
+           #:@length
+           #:make-g-variable
+           #:clear-grad
+           #:g-function
+           #:def-g-fun
            #:backward
+           #:g-+
+           #:g-
+           #:g--
+           #:g-*
+           #:g-/
+           #:g-exp
            #:g-square
-           #:d-exp))
-(in-package :gauna)
+           #:g-expt))
+(in-package #:gauna/core-simple)
 
 ;;;; Config
 (defparameter *enable-backprop* t)
@@ -42,12 +55,12 @@
                 `(defmethod ,(symbolicate "@" fn) ((obj ,class))
                    (,fn (,accessor obj))))))
 
-(defmethod print-object ((v g-variable) stream)
-  (format stream "variable(~a)~%" (@data v)))
-
 (delegate g-variable @data
           (shape size dtype length))
-; ndim length
+; ndim
+
+(defmethod print-object ((v g-variable) stream)
+  (format stream "variable(~a)~%" (@data v)))
 
 (defun supported-data-p (data)
   (or (null data)

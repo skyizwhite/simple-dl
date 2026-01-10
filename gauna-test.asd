@@ -2,5 +2,5 @@
   :class :package-inferred-system
   :pathname "tests"
   :depends-on ("rove"
-               "gauna-test/pkg")
+               "gauna-test/core-simple")
   :perform (test-op (o c) (symbol-call :rove :run c :style :dot)))

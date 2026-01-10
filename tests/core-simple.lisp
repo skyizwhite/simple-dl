@@ -1,15 +1,15 @@
-(uiop:define-package #:gauna-test/pkg
+(uiop:define-package #:gauna-test/core-simple
   (:use #:numcl
-        #:gauna)
+        #:gauna/core-simple)
   (:import-from #:rove
                 #:deftest
                 #:testing
                 #:ok))
-(in-package #:gauna-test/pkg)
+(in-package #:gauna-test/core-simple)
 
 (deftest square-test
   (testing "forward"
-    (let* ((x (make-g-variable (asarray '(2.0))))
+    (let* ((x (asarray '(2.0)))
            (y (g-square x)))
       (ok (= (asarray '(4.0)) (@data y)))))
   (testing "backward"
