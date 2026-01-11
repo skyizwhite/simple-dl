@@ -148,15 +148,14 @@
        (make-instance ',name))
      (defun ,name (&rest inputs)
        (apply #'call (make-instance ',name) inputs))
-     ,(and forward
-           `(defmethod forward ((f ,name) &rest args)
-              (destructuring-bind ,(first forward) args
-                ,@(rest forward))))
-     ,(and backward
-           `(defmethod f-backward ((f ,name) &rest args)
-              (destructuring-bind ,(first backward) args
-                (destructuring-bind ,(first forward) (mapcar #'@data (@inputs f))
-                  ,@(rest backward)))))))
+     (defmethod forward ((f ,name) &rest args)
+       (destructuring-bind ,(first forward) args
+         ,@(rest forward)))
+     (defmethod f-backward ((f ,name) &rest args)
+       (destructuring-bind ,(first backward) args
+         (destructuring-bind ,(first forward) (mapcar #'@data (@inputs f))
+           (declare (ignorable ,@(first forward)))
+           ,@(rest backward))))))
 
 (def-g-fun g+
   :forward ((x0 x1) (+ x0 x1))
