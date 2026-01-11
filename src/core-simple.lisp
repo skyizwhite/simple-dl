@@ -9,10 +9,12 @@
            #:g-variable
            #:@data
            #:@grad
+           #:@creator
            #:@shape
            #:@size
            #:@dtype
            #:@length
+           #:as-variable
            #:make-g-variable
            #:clear-grad
            #:g-function
