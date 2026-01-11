@@ -18,11 +18,11 @@
            #:g-function
            #:def-g-fun
            #:backward
-           #:g-+
+           #:g+
            #:g-
-           #:g--
-           #:g-*
-           #:g-/
+           #:g*
+           #:g/
+           #:g-neg
            #:g-exp
            #:g-square
            #:g-expt))
@@ -157,24 +157,24 @@
                   (declare (ignorable xs))
                   ,@(rest backward)))))))
 
-(def-g-fun g-+
+(def-g-fun g+
   :forward ((x0 x1) (+ x0 x1))
   :backward ((gy) (list gy gy)))
 
-(def-g-fun g-*
+(def-g-fun g*
   :forward ((x0 x1) (* x0 x1))
   :backward ((gy) (destructuring-bind (x0 x1) xs
                     (list (* gy x1) (* gy x0)))))
 
-(def-g-fun g-
+(def-g-fun g-neg
   :forward ((x) (- x))
   :backward ((gy) (- gy)))
 
-(def-g-fun g--
+(def-g-fun g-
   :forward ((x0 x1) (- x0 x1))
   :backward ((gy) (list gy (- gy))))
 
-(def-g-fun g-/
+(def-g-fun g/
   :forward ((x0 x1) (/ x0 x1))
   :backward ((gy) (destructuring-bind (x0 x1) xs
                     (let ((gx0 (/ gy x1))
