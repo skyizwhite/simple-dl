@@ -153,8 +153,7 @@
      ,(and backward
            `(defmethod f-backward ((f ,name) &rest args)
               (destructuring-bind ,(first backward) args
-                (let ((xs (mapcar #'@data (@inputs f))))
-                  (declare (ignorable xs))
+                (destructuring-bind ,(first forward) (mapcar #'@data (@inputs f))
                   ,@(rest backward)))))))
 
 (def-g-fun g+
@@ -163,8 +162,7 @@
 
 (def-g-fun g*
   :forward ((x0 x1) (* x0 x1))
-  :backward ((gy) (destructuring-bind (x0 x1) xs
-                    (list (* gy x1) (* gy x0)))))
+  :backward ((gy) (list (* gy x1) (* gy x0))))
 
 (def-g-fun g-neg
   :forward ((x) (- x))
@@ -176,22 +174,18 @@
 
 (def-g-fun g/
   :forward ((x0 x1) (/ x0 x1))
-  :backward ((gy) (destructuring-bind (x0 x1) xs
-                    (let ((gx0 (/ gy x1))
-                          (gx1 (* gy (/ (- x0) (expt x1 2)))))
-                      (list gx0 gx1)))))
+  :backward ((gy) (let ((gx0 (/ gy x1))
+                        (gx1 (* gy (/ (- x0) (expt x1 2)))))
+                    (list gx0 gx1))))
 
 (def-g-fun g-expt
   :forward ((x c) (expt x c))
-  :backward  ((gy) (destructuring-bind (x c) xs
-                     (* c (expt x (- c 1)) gy))))
+  :backward  ((gy) (* c (expt x (- c 1)) gy)))
 
 (def-g-fun g-exp
   :forward ((x) (exp x))
-  :backward ((gy) (let ((x (first xs)))
-                    (* (exp x) gy))))
+  :backward ((gy) (* (exp x) gy)))
 
 (def-g-fun g-square
   :forward ((x) (expt x 2))
-  :backward ((gy) (let ((x (first xs)))
-                    (* 2 x gy))))
+  :backward ((gy) (* 2 x gy)))
