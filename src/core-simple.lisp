@@ -7,6 +7,7 @@
                 #:weak-pointer-value)
   (:export #:with-no-grad
            #:g-variable
+           #:@name
            #:@data
            #:@grad
            #:@creator
@@ -27,7 +28,8 @@
            #:g-neg
            #:g-exp
            #:g-square
-           #:g-expt))
+           #:g-expt
+           #:render-graph))
 (in-package #:gauna/core-simple)
 
 ;;;; Config
@@ -38,7 +40,9 @@
      ,@body))
 
 (defclass g-variable ()
-  ((data       :accessor @data
+  ((id         :reader   @id
+               :initform (string (gensym "V")))
+   (data       :accessor @data
                :initarg  :data)
    (name       :accessor @name
                :initarg  :name
@@ -123,7 +127,9 @@
                         :do (setf (@grad (weak-pointer-value y)) nil)))))))
 
 (defclass g-function () 
-  ((inputs     :accessor @inputs
+  ((id         :reader   @id
+               :initform (string (gensym "F")))
+   (inputs     :accessor @inputs
                :initform nil)
    (outputs    :accessor @outputs
                :initform nil)
@@ -190,3 +196,75 @@
 (def-g-fun g-square
   :forward ((x) (expt x 2))
   :backward ((gy) (* 2 x gy)))
+
+
+;;;; utils
+
+(defun dot-var (v &key verbose)
+  (format nil "~a [label=\"~a\", color=orange, style=filled]~%"
+          (@id v)
+          (with-accessors ((name  @name)
+                           (shape @shape)
+                           (dtype @dtype)) v
+            (if name
+                (if verbose
+                    (format nil "~a: ~a ~a" name shape dtype)
+                    name)
+                ""))))
+
+(defun dot-func (f)
+  (apply #'cl:concatenate 'string
+         (format nil "~a [label=\"~a\", color=lightblue, style=filled, shape=box]~%"
+                 (@id f) (class-name (class-of f)))
+         (let ((fmt "~a -> ~a~%"))
+           (append
+            (loop :for x :in (@inputs f)
+                  :collect (format nil fmt (@id x) (@id f)))
+            (loop :for y :in (@outputs f)
+                  :collect (format nil fmt (@id f) (@id (weak-pointer-value y))))))))
+
+(defun get-dot-graph (v &key (verbose t))
+  (let ((txt "")
+        (funcs (list))
+        (seen-set (list)))
+    (labels ((add-func (f)
+               (unless (member f seen-set)
+                 (push f funcs)
+                 (push f seen-set))))
+      (add-func (@creator v))
+      (setf txt (cl:concatenate 'string txt (dot-var v :verbose verbose)))
+      (loop :while funcs
+            :for f := (pop funcs)
+            :do (setf txt (cl:concatenate 'string txt (dot-func f))) 
+                (loop :for x :in (@inputs f)
+                      :do (setf txt (cl:concatenate 'string txt (dot-var x :verbose verbose)))
+                          (when (@creator x)
+                            (add-func (@creator x))))))
+    (format nil "digraph g {~%~a~%}" txt)))
+
+(defun render-graph (output &key
+                            (dot-path "graph.dot")
+                            (png-path "graph.png")
+                            (dot-command "dot")
+                            (verbose nil))
+  (let ((dot (get-dot-graph output :verbose verbose)))
+    (unless (stringp dot)
+      (error "get-dot-graph must return a string, got: ~S" dot))
+    (with-open-file (out dot-path
+                         :direction :output
+                         :if-exists :supersede
+                         :if-does-not-exist :create
+                         :external-format :utf-8)
+      (write-string dot out))
+    (multiple-value-bind (stdout stderr exit-code)
+        (uiop:run-program (list dot-command "-Tpng" dot-path "-o" png-path)
+                          :output :string
+                          :error-output :string
+                          :ignore-error-status t)
+      (declare (ignore stdout))
+      (unless (and (integerp exit-code) (zerop exit-code))
+        (error "dot command failed (exit=~A). stderr: ~A"
+               exit-code
+               (or stderr ""))))
+      
+    png-path))

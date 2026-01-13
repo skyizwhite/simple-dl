@@ -1,0 +1,212 @@
+digraph g {
+V1123 [label="", color=orange, style=filled]
+F1122 [label="G*", color=lightblue, style=filled, shape=box]
+V1077 -> F1122
+V1121 -> F1122
+F1122 -> V1123
+V1077 [label="", color=orange, style=filled]
+V1121 [label="", color=orange, style=filled]
+F1119 [label="G+", color=lightblue, style=filled, shape=box]
+V1120 -> F1119
+V1118 -> F1119
+F1119 -> V1121
+V1120 [label="", color=orange, style=filled]
+V1118 [label="", color=orange, style=filled]
+F1117 [label="G*", color=lightblue, style=filled, shape=box]
+V1087 -> F1117
+V1116 -> F1117
+F1117 -> V1118
+V1087 [label="", color=orange, style=filled]
+V1116 [label="", color=orange, style=filled]
+F1115 [label="G+", color=lightblue, style=filled, shape=box]
+V1093 -> F1115
+V1114 -> F1115
+F1115 -> V1116
+V1093 [label="", color=orange, style=filled]
+V1114 [label="", color=orange, style=filled]
+F1113 [label="G+", color=lightblue, style=filled, shape=box]
+V1101 -> F1113
+V1112 -> F1113
+F1113 -> V1114
+V1101 [label="", color=orange, style=filled]
+V1112 [label="", color=orange, style=filled]
+F1111 [label="G+", color=lightblue, style=filled, shape=box]
+V1107 -> F1111
+V1110 -> F1111
+F1111 -> V1112
+V1107 [label="", color=orange, style=filled]
+V1110 [label="", color=orange, style=filled]
+F1108 [label="G*", color=lightblue, style=filled, shape=box]
+V1109 -> F1108
+V1037 -> F1108
+F1108 -> V1110
+V1109 [label="", color=orange, style=filled]
+V1037 [label="", color=orange, style=filled]
+F1036 [label="G-SQUARE", color=lightblue, style=filled, shape=box]
+V935 -> F1036
+F1036 -> V1037
+V935 [label="y", color=orange, style=filled]
+F1105 [label="G-", color=lightblue, style=filled, shape=box]
+V1106 -> F1105
+V1104 -> F1105
+F1105 -> V1107
+V1106 [label="", color=orange, style=filled]
+V1104 [label="", color=orange, style=filled]
+F1102 [label="G*", color=lightblue, style=filled, shape=box]
+V1103 -> F1102
+V1039 -> F1102
+F1102 -> V1104
+V1103 [label="", color=orange, style=filled]
+V1039 [label="", color=orange, style=filled]
+F1038 [label="G*", color=lightblue, style=filled, shape=box]
+V934 -> F1038
+V935 -> F1038
+F1038 -> V1039
+V934 [label="x", color=orange, style=filled]
+V935 [label="y", color=orange, style=filled]
+F1100 [label="G+", color=lightblue, style=filled, shape=box]
+V1096 -> F1100
+V1099 -> F1100
+F1100 -> V1101
+V1096 [label="", color=orange, style=filled]
+V1099 [label="", color=orange, style=filled]
+F1097 [label="G*", color=lightblue, style=filled, shape=box]
+V1098 -> F1097
+V935 -> F1097
+F1097 -> V1099
+V1098 [label="", color=orange, style=filled]
+V935 [label="y", color=orange, style=filled]
+F1094 [label="G*", color=lightblue, style=filled, shape=box]
+V1095 -> F1094
+V1035 -> F1094
+F1094 -> V1096
+V1095 [label="", color=orange, style=filled]
+V1035 [label="", color=orange, style=filled]
+F1034 [label="G-SQUARE", color=lightblue, style=filled, shape=box]
+V934 -> F1034
+F1034 -> V1035
+V934 [label="x", color=orange, style=filled]
+F1091 [label="G-", color=lightblue, style=filled, shape=box]
+V1092 -> F1091
+V1090 -> F1091
+F1091 -> V1093
+V1092 [label="", color=orange, style=filled]
+V1090 [label="", color=orange, style=filled]
+F1088 [label="G*", color=lightblue, style=filled, shape=box]
+V1089 -> F1088
+V934 -> F1088
+F1088 -> V1090
+V1089 [label="", color=orange, style=filled]
+V934 [label="x", color=orange, style=filled]
+F1086 [label="G-SQUARE", color=lightblue, style=filled, shape=box]
+V1085 -> F1086
+F1086 -> V1087
+V1085 [label="", color=orange, style=filled]
+F1084 [label="G-", color=lightblue, style=filled, shape=box]
+V1080 -> F1084
+V1083 -> F1084
+F1084 -> V1085
+V1080 [label="", color=orange, style=filled]
+V1083 [label="", color=orange, style=filled]
+F1081 [label="G*", color=lightblue, style=filled, shape=box]
+V1082 -> F1081
+V935 -> F1081
+F1081 -> V1083
+V1082 [label="", color=orange, style=filled]
+V935 [label="y", color=orange, style=filled]
+F1078 [label="G*", color=lightblue, style=filled, shape=box]
+V1079 -> F1078
+V934 -> F1078
+F1078 -> V1080
+V1079 [label="", color=orange, style=filled]
+V934 [label="x", color=orange, style=filled]
+F1075 [label="G+", color=lightblue, style=filled, shape=box]
+V1076 -> F1075
+V1074 -> F1075
+F1075 -> V1077
+V1076 [label="", color=orange, style=filled]
+V1074 [label="", color=orange, style=filled]
+F1073 [label="G*", color=lightblue, style=filled, shape=box]
+V1046 -> F1073
+V1072 -> F1073
+F1073 -> V1074
+V1046 [label="", color=orange, style=filled]
+V1072 [label="", color=orange, style=filled]
+F1071 [label="G+", color=lightblue, style=filled, shape=box]
+V1052 -> F1071
+V1070 -> F1071
+F1071 -> V1072
+V1052 [label="", color=orange, style=filled]
+V1070 [label="", color=orange, style=filled]
+F1069 [label="G+", color=lightblue, style=filled, shape=box]
+V1060 -> F1069
+V1068 -> F1069
+F1069 -> V1070
+V1060 [label="", color=orange, style=filled]
+V1068 [label="", color=orange, style=filled]
+F1067 [label="G+", color=lightblue, style=filled, shape=box]
+V1063 -> F1067
+V1066 -> F1067
+F1067 -> V1068
+V1063 [label="", color=orange, style=filled]
+V1066 [label="", color=orange, style=filled]
+F1064 [label="G*", color=lightblue, style=filled, shape=box]
+V1065 -> F1064
+V1037 -> F1064
+F1064 -> V1066
+V1065 [label="", color=orange, style=filled]
+V1037 [label="", color=orange, style=filled]
+F1061 [label="G*", color=lightblue, style=filled, shape=box]
+V1062 -> F1061
+V1039 -> F1061
+F1061 -> V1063
+V1062 [label="", color=orange, style=filled]
+V1039 [label="", color=orange, style=filled]
+F1059 [label="G-", color=lightblue, style=filled, shape=box]
+V1055 -> F1059
+V1058 -> F1059
+F1059 -> V1060
+V1055 [label="", color=orange, style=filled]
+V1058 [label="", color=orange, style=filled]
+F1056 [label="G*", color=lightblue, style=filled, shape=box]
+V1057 -> F1056
+V935 -> F1056
+F1056 -> V1058
+V1057 [label="", color=orange, style=filled]
+V935 [label="y", color=orange, style=filled]
+F1053 [label="G*", color=lightblue, style=filled, shape=box]
+V1054 -> F1053
+V1035 -> F1053
+F1053 -> V1055
+V1054 [label="", color=orange, style=filled]
+V1035 [label="", color=orange, style=filled]
+F1050 [label="G-", color=lightblue, style=filled, shape=box]
+V1051 -> F1050
+V1049 -> F1050
+F1050 -> V1052
+V1051 [label="", color=orange, style=filled]
+V1049 [label="", color=orange, style=filled]
+F1047 [label="G*", color=lightblue, style=filled, shape=box]
+V1048 -> F1047
+V934 -> F1047
+F1047 -> V1049
+V1048 [label="", color=orange, style=filled]
+V934 [label="x", color=orange, style=filled]
+F1045 [label="G-SQUARE", color=lightblue, style=filled, shape=box]
+V1044 -> F1045
+F1045 -> V1046
+V1044 [label="", color=orange, style=filled]
+F1043 [label="G+", color=lightblue, style=filled, shape=box]
+V934 -> F1043
+V1042 -> F1043
+F1043 -> V1044
+V934 [label="x", color=orange, style=filled]
+V1042 [label="", color=orange, style=filled]
+F1040 [label="G+", color=lightblue, style=filled, shape=box]
+V935 -> F1040
+V1041 -> F1040
+F1040 -> V1042
+V935 [label="y", color=orange, style=filled]
+V1041 [label="", color=orange, style=filled]
+
+}
