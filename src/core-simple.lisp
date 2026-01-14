@@ -29,6 +29,8 @@
            #:g-exp
            #:g-square
            #:g-expt
+           #:g-sin
+           #:g-cos
            #:render-graph))
 (in-package #:gauna/core-simple)
 
@@ -100,7 +102,7 @@
 
 (defmethod backward ((v g-variable) &key (retain-grad nil))
   (unless (@grad v)
-    (setf (@grad v) (ones-like (@data v))))
+    (setf (@grad v) (make-g-variable (ones-like (@data v)))))
   (let ((funcs (list))
         (seen-set (list)))
     (labels ((add-func (f)
@@ -114,14 +116,15 @@
             :for gys := (mapcar #'(lambda (output)
                                     (@grad (weak-pointer-value output)))
                                 (@outputs f))
-            :for gxs := (ensure-list (apply #'f-backward f gys))
-            :do (loop :for x :in (@inputs f)
-                      :for gx :in gxs
-                      :do (if (null (@grad x))
-                              (setf (@grad x) gx)
-                              (setf (@grad x) (+ (@grad x) gx)))
-                          (when (@creator x)
-                            (add-func (@creator x))))
+            :do (when *enable-backprop*
+                  (let ((gxs (ensure-list (apply #'f-backward f gys)))) 
+                    (loop :for x :in (@inputs f)
+                          :for gx :in gxs
+                          :do (if (null (@grad x))
+                                  (setf (@grad x) gx)
+                                  (setf (@grad x) (g+ (@grad x) gx)))
+                              (when (@creator x)
+                                (add-func (@creator x))))))
                 (unless retain-grad
                   (loop :for y in (@outputs f)
                         :do (setf (@grad (weak-pointer-value y)) nil)))))))
@@ -159,7 +162,7 @@
          ,@(rest forward)))
      (defmethod f-backward ((f ,name) &rest args)
        (destructuring-bind ,(first backward) args
-         (destructuring-bind ,(first forward) (mapcar #'@data (@inputs f))
+         (destructuring-bind ,(first forward) (@inputs f)
            (declare (ignorable ,@(first forward)))
            ,@(rest backward))))))
 
@@ -169,34 +172,41 @@
 
 (def-g-fun g*
   :forward ((x0 x1) (* x0 x1))
-  :backward ((gy) (list (* gy x1) (* gy x0))))
+  :backward ((gy) (list (g* gy x1) (g* gy x0))))
 
 (def-g-fun g-neg
   :forward ((x) (- x))
-  :backward ((gy) (- gy)))
+  :backward ((gy) (g-neg gy)))
 
 (def-g-fun g-
   :forward ((x0 x1) (- x0 x1))
-  :backward ((gy) (list gy (- gy))))
+  :backward ((gy) (list gy (g-neg gy))))
 
 (def-g-fun g/
   :forward ((x0 x1) (/ x0 x1))
-  :backward ((gy) (let ((gx0 (/ gy x1))
-                        (gx1 (* gy (/ (- x0) (expt x1 2)))))
+  :backward ((gy) (let ((gx0 (g/ gy x1))
+                        (gx1 (g* gy (g/ (g-neg x0) (g-expt x1 2)))))
                     (list gx0 gx1))))
 
 (def-g-fun g-expt
   :forward ((x c) (expt x c))
-  :backward  ((gy) (* c (expt x (- c 1)) gy)))
+  :backward  ((gy) (g* (g* c (g-expt x (g- c 1))) gy)))
 
 (def-g-fun g-exp
   :forward ((x) (exp x))
-  :backward ((gy) (* (exp x) gy)))
+  :backward ((gy) (g* (g-exp x) gy)))
 
 (def-g-fun g-square
   :forward ((x) (expt x 2))
-  :backward ((gy) (* 2 x gy)))
+  :backward ((gy) (g* 2 (g* x gy))))
 
+(def-g-fun g-sin
+  :forward ((x) (sin x))
+  :backward ((gy) (g* gy (g-cos x))) )
+
+(def-g-fun g-cos
+  :forward ((x) (cos x))
+  :backward ((gy) (g* gy (g-neg (g-sin x)))))
 
 ;;;; utils
 

@@ -53,7 +53,7 @@
            (y (g-square x)))
       (backward y)
       ;; dy/dx = 2x
-      (ok (= (@grad x) (asarray '(6.0)))))))
+      (ok (= (@data (@grad x)) (asarray '(6.0)))))))
 
 (deftest add-test
   (testing "forward"
@@ -67,8 +67,8 @@
            (x1 (make-g-variable (asarray '(3.0))))
            (y (g+ x0 x1)))
       (backward y)
-      (ok (= (@grad x0) (asarray '(1.0))))
-      (ok (= (@grad x1) (asarray '(1.0)))))))
+      (ok (= (@data (@grad x0)) (asarray '(1.0))))
+      (ok (= (@data (@grad x1)) (asarray '(1.0)))))))
 
 (deftest mul-test
   (testing "forward"
@@ -82,8 +82,8 @@
            (x1 (make-g-variable (asarray '(3.0))))
            (y (g* x0 x1)))
       (backward y)
-      (ok (= (@grad x0) (asarray '(3.0))))
-      (ok (= (@grad x1) (asarray '(2.0)))))))
+      (ok (= (@data (@grad x0)) (asarray '(3.0))))
+      (ok (= (@data (@grad x1)) (asarray '(2.0)))))))
 
 (deftest neg-test
   (testing "forward"
@@ -95,7 +95,7 @@
     (let* ((x (make-g-variable (asarray '(2.0))))
            (y (g-neg x)))
       (backward y)
-      (ok (= (@grad x) (asarray '(-1.0)))))))
+      (ok (= (@data (@grad x)) (asarray '(-1.0)))))))
 
 (deftest sub-test
   (testing "forward"
@@ -109,8 +109,8 @@
            (x1 (make-g-variable (asarray '(3.0))))
            (y (g- x0 x1)))
       (backward y)
-      (ok (= (@grad x0) (asarray '(1.0))))
-      (ok (= (@grad x1) (asarray '(-1.0)))))))
+      (ok (= (@data (@grad x0)) (asarray '(1.0))))
+      (ok (= (@data (@grad x1)) (asarray '(-1.0)))))))
 
 (deftest div-test
   (testing "forward"
@@ -124,8 +124,8 @@
            (x1 (make-g-variable (asarray '(3.0))))
            (y (g/ x0 x1)))
       (backward y)
-      (ok (= (@grad x0) (asarray (/ 1.0 3.0))))
-      (ok (= (@grad x1) (asarray (- (/ 2.0 3.0))))))))
+      (ok (= (@data (@grad x0)) (asarray (/ 1.0 3.0))))
+      (ok (= (@data (@grad x1)) (asarray (- (/ 2.0 3.0))))))))
 
 (deftest exp-test
   (testing "forward"
@@ -137,7 +137,7 @@
     (let* ((x (make-g-variable (asarray '(0.0))))
            (y (g-exp x)))
       (backward y)
-      (ok (= (@grad x) (asarray '(1.0)))))))
+      (ok (= (@data (@grad x)) (asarray '(1.0)))))))
 
 (deftest expt-test
   (testing "forward"
@@ -149,7 +149,7 @@
     (let* ((x (make-g-variable (asarray '(2.0))))
            (y (g-expt x 3)))
       (backward y)
-      (ok (= (@grad x) (asarray '(12.0)))))))
+      (ok (= (@data (@grad x)) (asarray '(12.0)))))))
 
 ;;;; --------------------------------------------
 ;;;; Chain rule / graph behavior
@@ -161,7 +161,7 @@
            (y (g+ (g-square x) x)))
       (backward y)
       (ok (= (@data y) (asarray '(12.0))))
-      (ok (= (@grad x) (asarray '(7.0)))))))
+      (ok (= (@data (@grad x)) (asarray '(7.0)))))))
 
 (deftest grad-accumulation-test
   (testing "gradient accumulates when variable is used twice"
@@ -169,7 +169,7 @@
            (y (g* x x)))
       (backward y)
       ;; dy/dx = 2x = 8
-      (ok (= (@grad x) (asarray '(8.0)))))))
+      (ok (= (@data (@grad x)) (asarray '(8.0)))))))
 
 (deftest retain-grad-test
   (testing "retain-grad keeps intermediate gradients"
@@ -177,7 +177,7 @@
            (a (g-square x))
            (y (g+ a (asarray '(1.0)))))
       (backward y :retain-grad t)
-      (ok (= (@grad a) (asarray '(1.0)))))))
+      (ok (= (@data (@grad a)) (asarray '(1.0)))))))
 
 ;;;; -------------------------------------------------
 ;;;; Benchmark functions
@@ -233,8 +233,8 @@
     (multiple-value-bind (x y) (make-xy 1.0 1.0)
       (let ((z (sphere x y)))
         (backward z)
-        (ok (= (@grad x) (asarray '(2.0))))
-        (ok (= (@grad y) (asarray '(2.0))))))))
+        (ok (= (@data (@grad x)) (asarray '(2.0))))
+        (ok (= (@data (@grad y)) (asarray '(2.0))))))))
 
 (deftest matyas-benchmark-test
   (testing "forward at (1,1): matyas=0.04"
@@ -249,8 +249,8 @@
         (backward z)
         ;; ∂/∂x = 0.52x - 0.48y, ∂/∂y = 0.52y - 0.48x
         ;; at (1,1) => 0.04, 0.04
-        (ok (= (@grad x) (asarray '(0.04))))
-        (ok (= (@grad y) (asarray '(0.04))))))))
+        (ok (= (@data (@grad x)) (asarray '(0.04))))
+        (ok (= (@data (@grad y)) (asarray '(0.04))))))))
 
 (deftest goldstein-price-benchmark-test
   (testing "forward at (1,1): goldstein-price=1876"
@@ -262,5 +262,5 @@
     (multiple-value-bind (x y) (make-xy 1.0 1.0)
       (let ((z (goldstein-price x y)))
         (backward z)
-        (ok (= (@grad x) (asarray '(-5376.0))))
-        (ok (= (@grad y) (asarray '(8064.0))))))))
+        (ok (= (@data (@grad x)) (asarray '(-5376.0))))
+        (ok (= (@data (@grad y)) (asarray '(8064.0))))))))
