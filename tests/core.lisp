@@ -1,12 +1,12 @@
-(uiop:define-package #:gauna-test/core-simple
+(uiop:define-package #:gauna-test/core
   (:use #:numcl
-        #:gauna/core-simple)
+        #:gauna/core)
   (:import-from #:rove
                 #:deftest
                 #:testing
                 #:ok
                 #:ng))
-(in-package #:gauna-test/core-simple)
+(in-package #:gauna-test/core)
 
 (defun arr1-eq (a b)
   (equal #*1 (= a b)))

@@ -1,4 +1,4 @@
-(uiop:define-package #:gauna/core-simple
+(uiop:define-package #:gauna/core
   (:use #:numcl)
   (:import-from #:alexandria
                 #:symbolicate)
@@ -33,7 +33,7 @@
            #:g-cos
            #:g-tanh
            #:render-graph))
-(in-package #:gauna/core-simple)
+(in-package #:gauna/core)
 
 ;;;; Config
 (defparameter *enable-backprop* t)
