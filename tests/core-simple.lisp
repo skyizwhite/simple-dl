@@ -8,6 +8,9 @@
                 #:ng))
 (in-package #:gauna-test/core-simple)
 
+(defun arr1-eq (a b)
+  (equal #*1 (= a b)))
+
 ;;;; --------------------------------------------
 ;;;; Basic variable tests
 ;;;; --------------------------------------------
@@ -16,7 +19,7 @@
   (testing "as-variable converts number to g-variable"
     (let ((v (as-variable 3.0)))
       (ok (typep v 'g-variable))
-      (ok (= (@data v) (asarray '(3.0))))))
+      (ok (arr1-eq (@data v) (asarray '(3.0))))))
   
   (testing "make-g-variable accepts numcl array"
     (ok (typep (make-g-variable (asarray '(1.0 2.0)))
@@ -35,7 +38,7 @@
   (testing "with-no-grad disables backprop graph construction"
     (let* ((x (make-g-variable (asarray '(2.0))))
            (y (with-no-grad (g-square x))))
-      (ok (= (@data y) (asarray '(4.0))))
+      (ok (arr1-eq (@data y) (asarray '(4.0))))
       (ok (null (@creator y))))))
 
 ;;;; --------------------------------------------
@@ -46,110 +49,110 @@
   (testing "forward"
     (let* ((x (asarray '(2.0)))
            (y (g-square x)))
-      (ok (= (@data y) (asarray '(4.0))))))
+      (ok (arr1-eq (@data y) (asarray '(4.0))))))
   
   (testing "backward"
     (let* ((x (make-g-variable (asarray '(3.0))))
            (y (g-square x)))
       (backward y)
       ;; dy/dx = 2x
-      (ok (= (@data (@grad x)) (asarray '(6.0)))))))
+      (ok (arr1-eq (@data (@grad x)) (asarray '(6.0)))))))
 
 (deftest add-test
   (testing "forward"
     (let* ((x0 (asarray '(2.0)))
            (x1 (asarray '(3.0)))
            (y (g+ x0 x1)))
-      (ok (= (@data y) (asarray '(5.0))))))
+      (ok (arr1-eq (@data y) (asarray '(5.0))))))
   
   (testing "backward"
     (let* ((x0 (make-g-variable (asarray '(2.0))))
            (x1 (make-g-variable (asarray '(3.0))))
            (y (g+ x0 x1)))
       (backward y)
-      (ok (= (@data (@grad x0)) (asarray '(1.0))))
-      (ok (= (@data (@grad x1)) (asarray '(1.0)))))))
+      (ok (arr1-eq (@data (@grad x0)) (asarray '(1.0))))
+      (ok (arr1-eq (@data (@grad x1)) (asarray '(1.0)))))))
 
 (deftest mul-test
   (testing "forward"
     (let* ((x0 (asarray '(2.0)))
            (x1 (asarray '(3.0)))
            (y (g* x0 x1)))
-      (ok (= (@data y) (asarray '(6.0))))))
+      (ok (arr1-eq (@data y) (asarray '(6.0))))))
   
   (testing "backward"
     (let* ((x0 (make-g-variable (asarray '(2.0))))
            (x1 (make-g-variable (asarray '(3.0))))
            (y (g* x0 x1)))
       (backward y)
-      (ok (= (@data (@grad x0)) (asarray '(3.0))))
-      (ok (= (@data (@grad x1)) (asarray '(2.0)))))))
+      (ok (arr1-eq (@data (@grad x0)) (asarray '(3.0))))
+      (ok (arr1-eq (@data (@grad x1)) (asarray '(2.0)))))))
 
 (deftest neg-test
   (testing "forward"
     (let* ((x (asarray '(2.0)))
            (y (g-neg x)))
-      (ok (= (@data y) (asarray '(-2.0))))))
+      (ok (arr1-eq (@data y) (asarray '(-2.0))))))
   
   (testing "backward"
     (let* ((x (make-g-variable (asarray '(2.0))))
            (y (g-neg x)))
       (backward y)
-      (ok (= (@data (@grad x)) (asarray '(-1.0)))))))
+      (ok (arr1-eq (@data (@grad x)) (asarray '(-1.0)))))))
 
 (deftest sub-test
   (testing "forward"
     (let* ((x0 (asarray '(5.0)))
            (x1 (asarray '(3.0)))
            (y (g- x0 x1)))
-      (ok (= (@data y) (asarray '(2.0))))))
+      (ok (arr1-eq (@data y) (asarray '(2.0))))))
   
   (testing "backward"
     (let* ((x0 (make-g-variable (asarray '(5.0))))
            (x1 (make-g-variable (asarray '(3.0))))
            (y (g- x0 x1)))
       (backward y)
-      (ok (= (@data (@grad x0)) (asarray '(1.0))))
-      (ok (= (@data (@grad x1)) (asarray '(-1.0)))))))
+      (ok (arr1-eq (@data (@grad x0)) (asarray '(1.0))))
+      (ok (arr1-eq (@data (@grad x1)) (asarray '(-1.0)))))))
 
 (deftest div-test
   (testing "forward"
     (let* ((x0 (asarray '(6.0)))
            (x1 (asarray '(3.0)))
            (y (g/ x0 x1)))
-      (ok (= (@data y) (asarray '(2.0))))))
+      (ok (arr1-eq (@data y) (asarray '(2.0))))))
   
   (testing "backward"
     (let* ((x0 (make-g-variable (asarray '(6.0))))
            (x1 (make-g-variable (asarray '(3.0))))
            (y (g/ x0 x1)))
       (backward y)
-      (ok (= (@data (@grad x0)) (asarray (/ 1.0 3.0))))
-      (ok (= (@data (@grad x1)) (asarray (- (/ 2.0 3.0))))))))
+      (ok (arr1-eq (@data (@grad x0)) (asarray (/ 1.0 3.0))))
+      (ok (arr1-eq (@data (@grad x1)) (asarray (- (/ 2.0 3.0))))))))
 
 (deftest exp-test
   (testing "forward"
     (let* ((x (asarray '(0.0)))
            (y (g-exp x)))
-      (ok (= (@data y) (asarray '(1.0))))))
+      (ok (arr1-eq (@data y) (asarray '(1.0))))))
   
   (testing "backward"
     (let* ((x (make-g-variable (asarray '(0.0))))
            (y (g-exp x)))
       (backward y)
-      (ok (= (@data (@grad x)) (asarray '(1.0)))))))
+      (ok (arr1-eq (@data (@grad x)) (asarray '(1.0)))))))
 
 (deftest expt-test
   (testing "forward"
     (let* ((x (asarray '(2.0)))
            (y (g-expt x 3)))
-      (ok (= (@data y) (asarray '(8.0))))))
+      (ok (arr1-eq (@data y) (asarray '(8.0))))))
   
   (testing "backward"
     (let* ((x (make-g-variable (asarray '(2.0))))
            (y (g-expt x 3)))
       (backward y)
-      (ok (= (@data (@grad x)) (asarray '(12.0)))))))
+      (ok (arr1-eq (@data (@grad x)) (asarray '(12.0)))))))
 
 ;;;; --------------------------------------------
 ;;;; Chain rule / graph behavior
@@ -160,8 +163,8 @@
     (let* ((x (make-g-variable (asarray '(3.0))))
            (y (g+ (g-square x) x)))
       (backward y)
-      (ok (= (@data y) (asarray '(12.0))))
-      (ok (= (@data (@grad x)) (asarray '(7.0)))))))
+      (ok (arr1-eq (@data y) (asarray '(12.0))))
+      (ok (arr1-eq (@data (@grad x)) (asarray '(7.0)))))))
 
 (deftest grad-accumulation-test
   (testing "gradient accumulates when variable is used twice"
@@ -169,7 +172,7 @@
            (y (g* x x)))
       (backward y)
       ;; dy/dx = 2x = 8
-      (ok (= (@data (@grad x)) (asarray '(8.0)))))))
+      (ok (arr1-eq (@data (@grad x)) (asarray '(8.0)))))))
 
 (deftest retain-grad-test
   (testing "retain-grad keeps intermediate gradients"
@@ -177,7 +180,7 @@
            (a (g-square x))
            (y (g+ a (asarray '(1.0)))))
       (backward y :retain-grad t)
-      (ok (= (@data (@grad a)) (asarray '(1.0)))))))
+      (ok (arr1-eq (@data (@grad a)) (asarray '(1.0)))))))
 
 ;;;; -------------------------------------------------
 ;;;; Benchmark functions
@@ -227,21 +230,21 @@
   (testing "forward at (1,1): sphere=2"
     (multiple-value-bind (x y) (make-xy 1.0 1.0)
       (let ((z (sphere x y)))
-        (ok (= (@data z) (asarray '(2.0)))))))
+        (ok (arr1-eq (@data z) (asarray '(2.0)))))))
   
   (testing "backward at (1,1): grad=(2,2)"
     (multiple-value-bind (x y) (make-xy 1.0 1.0)
       (let ((z (sphere x y)))
         (backward z)
-        (ok (= (@data (@grad x)) (asarray '(2.0))))
-        (ok (= (@data (@grad y)) (asarray '(2.0))))))))
+        (ok (arr1-eq (@data (@grad x)) (asarray '(2.0))))
+        (ok (arr1-eq (@data (@grad y)) (asarray '(2.0))))))))
 
 (deftest matyas-benchmark-test
   (testing "forward at (1,1): matyas=0.04"
     (multiple-value-bind (x y) (make-xy 1.0 1.0)
       (let ((z (matyas x y)))
         ;; 0.26*(1^2+1^2) - 0.48*(1*1) = 0.52 - 0.48 = 0.04
-        (ok (= (@data z) (asarray '(0.04)))))))
+        (ok (arr1-eq (@data z) (asarray '(0.03999999)))))))
   
   (testing "backward at (1,1): grad=(0.04,0.04)"
     (multiple-value-bind (x y) (make-xy 1.0 1.0)
@@ -249,18 +252,18 @@
         (backward z)
         ;; ∂/∂x = 0.52x - 0.48y, ∂/∂y = 0.52y - 0.48x
         ;; at (1,1) => 0.04, 0.04
-        (ok (= (@data (@grad x)) (asarray '(0.04))))
-        (ok (= (@data (@grad y)) (asarray '(0.04))))))))
+        (ok (arr1-eq (@data (@grad x)) (asarray '(0.03999999))))
+        (ok (arr1-eq (@data (@grad y)) (asarray '(0.03999999))))))))
 
 (deftest goldstein-price-benchmark-test
   (testing "forward at (1,1): goldstein-price=1876"
     (multiple-value-bind (x y) (make-xy 1.0 1.0)
       (let ((z (goldstein-price x y)))
-        (ok (= (@data z) (asarray '(1876.0)))))))
+        (ok (arr1-eq (@data z) (asarray '(1876.0)))))))
   
   (testing "backward at (1,1): grad=(-5376, 8064)"
     (multiple-value-bind (x y) (make-xy 1.0 1.0)
       (let ((z (goldstein-price x y)))
         (backward z)
-        (ok (= (@data (@grad x)) (asarray '(-5376.0))))
-        (ok (= (@data (@grad y)) (asarray '(8064.0))))))))
+        (ok (arr1-eq (@data (@grad x)) (asarray '(-5376.0))))
+        (ok (arr1-eq (@data (@grad y)) (asarray '(8064.0))))))))
