@@ -137,6 +137,15 @@
       (backward y)
       (ok (arr1-eq (@data (@grad x)) (asarray '(0.0)))))))
 
+(deftest tanh-test
+  (testing "tanh"
+    (let* ((x (make-g-variable (asarray '(0.0))))
+           (y (g-tanh x)))
+      ;; forward: tanh(0) = 0
+      (ok (arr1-eq (@data y) (asarray '(0.0))))
+      ;; backward: d/dx tanh(x) = 1 - tanh(x)^2, so at 0 => 1
+      (backward y)
+      (ok (arr1-eq (@data (@grad x)) (asarray '(1.0)))))))
 
 ;;;; --------------------------------------------
 ;;;; Chain rule / graph behavior

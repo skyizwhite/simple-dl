@@ -31,6 +31,7 @@
            #:g-expt
            #:g-sin
            #:g-cos
+           #:g-tanh
            #:render-graph))
 (in-package #:gauna/core-simple)
 
@@ -164,7 +165,9 @@
        (destructuring-bind ,(first backward) args
          (destructuring-bind ,(first forward) (@inputs f)
            (declare (ignorable ,@(first forward)))
-           ,@(rest backward))))))
+           (let ((ys (@outputs f)))
+             (declare (ignorable ys))
+             ,@(rest backward)))))))
 
 (def-g-fun g+
   :forward ((x0 x1) (+ x0 x1))
@@ -207,6 +210,11 @@
 (def-g-fun g-cos
   :forward ((x) (cos x))
   :backward ((gy) (g* gy (g-neg (g-sin x)))))
+
+(def-g-fun g-tanh
+  :forward ((x) (tanh x))
+  :backward ((gy) (let ((y (weak-pointer-value (first ys))))
+                    (g* gy (g- 1 (g-square y))))))
 
 ;;;; utils
 
