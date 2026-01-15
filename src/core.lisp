@@ -155,15 +155,15 @@
             (@outputs f) (mapcar #'make-weak-pointer outputs)))
     (maybe-unlist outputs)))
 
-(defmacro def-g-fun (name &key props init call forward backward)
+(defmacro def-g-fun (name &key props make call forward backward)
   `(eval-when (:compile-toplevel :load-toplevel :execute)
      (defclass ,name (g-function)
        ,(loop :for p :in props
               :collect (list p :accessor (symbolicate '@ p))))
-     (defun ,(symbolicate 'make- name) ,(first init)
+     (defun ,(symbolicate 'make- name) ,(first make)
        (let ((f (make-instance ',name)))
          (declare (ignorable f))
-         ,@(rest init)
+         ,@(rest make)
          f))
      ,(if call
           `(defun ,name ,(first call) ,@(rest call))
@@ -204,7 +204,7 @@
 
 (def-g-fun g-expt
   :props (c)
-  :init ((c) (setf (@c f) c))
+  :make ((c) (setf (@c f) c))
   :call ((x c) (call (make-g-expt c) x))
   :forward ((x) (expt x (@c f)))
   :backward  ((gy) (g* (g* (@c f) (g-expt x (- (@c f) 1))) gy)))
@@ -232,7 +232,7 @@
 
 (def-g-fun g-reshape
   :props (shape x-shape)
-  :init ((shape) (setf (@shape f) shape))
+  :make ((shape) (setf (@shape f) shape))
   :call ((x shape) (call (make-g-reshape shape) x))
   :forward ((x) (setf (@x-shape f) (shape x))
                 (reshape x (@shape f)))
