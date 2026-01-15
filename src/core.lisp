@@ -15,8 +15,6 @@
            #:@size
            #:@dtype
            #:@length
-           #:@transpose
-           #:@reshape
            #:as-variable
            #:make-g-variable
            #:g-asarray
@@ -70,11 +68,8 @@
                    (,fn (,accessor obj))))))
 
 (delegate g-variable @data
-          (shape size dtype length transpose))
+          (shape size dtype length))
 ; ndim
-
-(defmethod @reshape ((v g-variable) shape)
-  (reshape (@data v) shape))
 
 (defmethod print-object ((v g-variable) stream)
   (format stream "variable(~a)~%" (@data v)))
