@@ -35,6 +35,7 @@
            #:g-tanh
            #:g-reshape
            #:g-transpose
+           #:g-matmul
            #:render-graph))
 (in-package #:gauna/core)
 
@@ -243,6 +244,11 @@
 (def-g-fun g-transpose
   :forward ((x) (transpose x))
   :backward ((gy) (g-transpose gy)))
+
+(def-g-fun g-matmul
+  :forward ((x w) (matmul x w))
+  :backward ((gy) (list (g-matmul gy (g-transpose w)) ;gx
+                        (g-matmul (g-transpose x) gy)))) ;gw
 
 ;;;; utils
 
