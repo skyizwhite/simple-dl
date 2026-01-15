@@ -245,6 +245,14 @@
   :forward ((x) (transpose x))
   :backward ((gy) (g-transpose gy)))
 
+(def-g-fun g-sum
+  :forward ((x) (let ((y (sum x)))
+                  (if (null (shape y))
+                      (expand-dims (asarray y) 0)
+                      y)))
+  :backward ((gy)
+             (g* gy (ones-like (@data x)))))
+
 (def-g-fun g-matmul
   :forward ((x w) (matmul x w))
   :backward ((gy) (list (g-matmul gy (g-transpose w)) ;gx
