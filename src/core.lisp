@@ -19,6 +19,7 @@
            #:@reshape
            #:as-variable
            #:make-g-variable
+           #:g-asarray
            #:clear-grad
            #:g-function
            #:def-g-fun
@@ -86,6 +87,9 @@
   (unless (supported-data-p data)
     (error "~a is not supported" (type-of data)))
   (make-instance 'g-variable :data data :name name))
+
+(defun g-asarray (arr)
+  (make-g-variable (asarray arr)))
 
 (defun as-variable (obj)
   (cond ((typep obj 'g-variable)
