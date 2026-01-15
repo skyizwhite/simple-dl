@@ -15,6 +15,8 @@
            #:@size
            #:@dtype
            #:@length
+           #:@transpose
+           #:@reshape
            #:as-variable
            #:make-g-variable
            #:clear-grad
@@ -33,6 +35,7 @@
            #:g-cos
            #:g-tanh
            #:g-reshape
+           #:g-transpose
            #:render-graph))
 (in-package #:gauna/core)
 
