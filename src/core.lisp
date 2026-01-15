@@ -151,13 +151,20 @@
             (@outputs f) (mapcar #'make-weak-pointer outputs)))
     (maybe-unlist outputs)))
 
-(defmacro def-g-fun (name &key forward backward)
+(defmacro def-g-fun (name &key props init call forward backward)
   `(eval-when (:compile-toplevel :load-toplevel :execute)
-     (defclass ,name (g-function) ())
-     (defun ,(symbolicate 'make- name) ()
-       (make-instance ',name))
-     (defun ,name (&rest inputs)
-       (apply #'call (make-instance ',name) inputs))
+     (defclass ,name (g-function)
+       ,(loop :for p :in props
+              :collect (list p :accessor (symbolicate '@ p))))
+     (defun ,(symbolicate 'make- name) ,(first init)
+       (let ((f (make-instance ',name)))
+         (declare (ignorable f))
+         ,@(rest init)
+         f))
+     ,(if call
+          `(defun ,name ,(first call) ,@(rest call))
+          `(defun ,name (&rest inputs)
+             (apply #'call (make-instance ',name) inputs)))
      (defmethod forward ((f ,name) &rest args)
        (destructuring-bind ,(first forward) args
          ,@(rest forward)))
@@ -192,8 +199,11 @@
                     (list gx0 gx1))))
 
 (def-g-fun g-expt
-  :forward ((x c) (expt x c))
-  :backward  ((gy) (g* (g* c (g-expt x (g- c 1))) gy)))
+  :props (c)
+  :init ((c) (setf (@c f) c))
+  :call ((x c) (call (make-g-expt c) x))
+  :forward ((x) (expt x (@c f)))
+  :backward  ((gy) (g* (g* (@c f) (g-expt x (- (@c f) 1))) gy)))
 
 (def-g-fun g-exp
   :forward ((x) (exp x))
