@@ -32,6 +32,7 @@
            #:g-sin
            #:g-cos
            #:g-tanh
+           #:g-reshape
            #:render-graph))
 (in-package #:gauna/core)
 
@@ -65,8 +66,11 @@
                    (,fn (,accessor obj))))))
 
 (delegate g-variable @data
-          (shape size dtype length))
+          (shape size dtype length transpose))
 ; ndim
+
+(defmethod @reshape ((v g-variable) shape)
+  (reshape (@data v) shape))
 
 (defmethod print-object ((v g-variable) stream)
   (format stream "variable(~a)~%" (@data v)))
@@ -225,6 +229,18 @@
   :forward ((x) (tanh x))
   :backward ((gy) (let ((y (weak-pointer-value (first ys))))
                     (g* gy (g- 1 (g-square y))))))
+
+(def-g-fun g-reshape
+  :props (shape x-shape)
+  :init ((shape) (setf (@shape f) shape))
+  :call ((x shape) (call (make-g-reshape shape) x))
+  :forward ((x) (setf (@x-shape f) (shape x))
+                (reshape x (@shape f)))
+  :backward ((gy) (g-reshape gy (@x-shape f))))
+
+(def-g-fun g-transpose
+  :forward ((x) (transpose x))
+  :backward ((gy) (g-transpose gy)))
 
 ;;;; utils
 
