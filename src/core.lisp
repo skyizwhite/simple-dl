@@ -77,7 +77,8 @@
 
 (defun supported-data-p (data)
   (or (null data)
-      (and (numcl-array-p data) (shape data))))
+      (numberp data)
+      (numcl-array-p data)))
 
 (defun make-g-variable (data &optional name)
   (unless (supported-data-p data)
@@ -88,12 +89,9 @@
   (make-g-variable (asarray arr)))
 
 (defun as-variable (obj)
-  (cond ((typep obj 'g-variable)
-         obj)
-        ((numberp obj)
-         (make-g-variable (asarray (ensure-list obj))))
-        (t
-         (make-g-variable obj))))
+  (if (typep obj 'g-variable)
+      obj
+      (make-g-variable obj)))
 
 (defmethod set-creator ((v g-variable) f)
   (setf (@creator v) f
@@ -150,7 +148,7 @@
   (let* ((inputs (mapcar #'as-variable inputs))
          (xs (mapcar #'@data inputs))
          (ys (ensure-list (apply #'forward f xs)))
-         (outputs (mapcar (lambda (y) (make-g-variable (asarray y))) ys)))
+         (outputs (mapcar (lambda (y) (make-g-variable y)) ys)))
     (when *enable-backprop*
       (setf (@generation f) (apply #'max (mapcar #'@generation inputs)))
       (mapc (lambda (output) (set-creator output f)) outputs)
@@ -162,7 +160,7 @@
   `(eval-when (:compile-toplevel :load-toplevel :execute)
      (defclass ,name (g-function)
        ,(loop :for p :in props
-              :collect (list p :accessor (symbolicate '@ p))))
+              :collect (list p :accessor p)))
      (defun ,(symbolicate 'make- name) ,(first make)
        (let ((f (make-instance ',name)))
          (declare (ignorable f))
@@ -206,7 +204,7 @@
                     (list gx0 gx1))))
 
 (def-g-fun g-expt
-  :props (c)
+  :props (@c)
   :make ((c) (setf (@c f) c))
   :call ((x c) (call (make-g-expt c) x))
   :forward ((x) (expt x (@c f)))
@@ -234,7 +232,7 @@
                     (g* gy (g- 1 (g-square y))))))
 
 (def-g-fun g-reshape
-  :props (shape x-shape)
+  :props (@shape @x-shape)
   :make ((shape) (setf (@shape f) shape))
   :call ((x shape) (call (make-g-reshape shape) x))
   :forward ((x) (setf (@x-shape f) (shape x))
@@ -244,14 +242,6 @@
 (def-g-fun g-transpose
   :forward ((x) (transpose x))
   :backward ((gy) (g-transpose gy)))
-
-(def-g-fun g-sum
-  :forward ((x) (let ((y (sum x)))
-                  (if (null (shape y))
-                      (expand-dims (asarray y) 0)
-                      y)))
-  :backward ((gy)
-             (g* gy (ones-like (@data x)))))
 
 (def-g-fun g-matmul
   :forward ((x w) (matmul x w))
